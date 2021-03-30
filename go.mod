@@ -1,4 +1,4 @@
-module fts
+module github.com/nxshock/fts
 
 go 1.16
 
