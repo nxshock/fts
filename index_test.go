@@ -103,3 +103,13 @@ func TestSearchFromDisk(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []int{1}, ids)
 }
+
+func TestDoNotSaveMemoryIndex(t *testing.T) {
+	index, err := Open("")
+	assert.NoError(t, err)
+
+	index.Add(1, "first document")
+
+	err = index.Save()
+	assert.Error(t, err)
+}

@@ -3,7 +3,6 @@ package fts
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -147,7 +146,7 @@ func (index *Index) Save() error {
 	defer index.mu.Unlock()
 
 	if index.fileName == "" {
-		return errors.New("memory index can't be saved")
+		return errMemOnlyIndex
 	}
 
 	if !index.unsaved {
