@@ -60,6 +60,10 @@ func TestSearchFromMemory(t *testing.T) {
 	ids, err = index.Search("document")
 	assert.NoError(t, err)
 	assert.Equal(t, []int{1, 2, 3}, ids)
+
+	ids, err = index.Search("document first")
+	assert.NoError(t, err)
+	assert.Equal(t, []int{1}, ids)
 }
 
 func TestSearchFromDisk(t *testing.T) {
@@ -94,4 +98,8 @@ func TestSearchFromDisk(t *testing.T) {
 	ids, err = index.Search("document")
 	assert.NoError(t, err)
 	assert.Equal(t, []int{1, 2, 3}, ids)
+
+	ids, err = index.Search("document first")
+	assert.NoError(t, err)
+	assert.Equal(t, []int{1}, ids)
 }
