@@ -17,16 +17,16 @@ func TestSaveLoad(t *testing.T) {
 	index.Add(1, "first document")
 	err = index.Save()
 	assert.NoError(t, err)
-	assert.Equal(t, map[string]int64{"document": 0, "first": 13}, index.filePositions)
+	assert.Equal(t, map[string]int64{"document": 0, "first": 11}, index.filePositions)
 
 	index.Add(2, "second document")
 	err = index.Save()
 	assert.NoError(t, err)
-	assert.Equal(t, map[string]int64{"document": 0, "first": 14, "second": 24}, index.filePositions)
+	assert.Equal(t, map[string]int64{"document": 0, "first": 12, "second": 20}, index.filePositions)
 
 	index2, err := Open(fileName)
 	assert.NoError(t, err)
-	assert.Len(t, index2.filePositions, 3)
+	assert.Equal(t, map[string]int64{"document": 0, "first": 12, "second": 20}, index2.filePositions)
 }
 
 func TestSearchFromMemory(t *testing.T) {
@@ -80,7 +80,7 @@ func TestSearchFromDisk(t *testing.T) {
 	err = index.Save()
 	assert.NoError(t, err)
 
-	expectedPositions := map[string]int64{"document": 0, "first": 15, "second": 25, "third": 36}
+	expectedPositions := map[string]int64{"document": 0, "first": 13, "second": 21, "third": 30}
 	assert.Equal(t, expectedPositions, index.filePositions)
 
 	ids, err := index.Search("first")

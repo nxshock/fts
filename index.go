@@ -2,14 +2,13 @@ package fts
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"sort"
 	"sync"
 
-	"github.com/gxba/binary"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 // Index holds basic indexes of documents.
@@ -87,7 +86,7 @@ func (index *Index) loadKeyFromDisk(key string) ([]int, error) {
 		return nil, err
 	}
 
-	diskKey, ids, err := read(f)
+	diskKey, ids, err := read(msgpack.NewDecoder(bufio.NewReader(f)))
 	if err != nil {
 		return nil, err
 	}
@@ -160,6 +159,7 @@ func (index *Index) Save() error {
 		return err
 	}
 	buf := bufio.NewWriter(f)
+	enc := msgpack.NewEncoder(buf)
 
 	keys := make(map[string]struct{})
 	for k := range index.memoryData {
@@ -189,7 +189,7 @@ func (index *Index) Save() error {
 		pos += int64(buf.Buffered())
 		newFilePositions[k] = pos
 
-		err = write(buf, k, ids)
+		err = write(enc, k, ids)
 		if err != nil {
 			return err
 		}
@@ -226,15 +226,13 @@ func (index *Index) readDiskStats() error {
 	defer f.Close()
 
 	buf := bufio.NewReader(f)
+	dec := msgpack.NewDecoder(buf)
 
 	for {
-		pos, err := f.Seek(0, io.SeekCurrent)
-		if err != nil {
-			return err
-		}
+		pos, _ := f.Seek(0, io.SeekCurrent)
 		pos -= int64(buf.Buffered())
 
-		word, _, err := read(buf)
+		word, _, err := read(dec)
 		if err != nil && err == io.EOF {
 			break
 		} else if err != nil {
@@ -245,65 +243,4 @@ func (index *Index) readDiskStats() error {
 	}
 
 	return nil
-}
-
-func read(r io.Reader) (key string, ids []int, err error) {
-	var keyLen int
-	err = binary.Read(r, binary.LittleEndian, &keyLen)
-	if err == io.ErrUnexpectedEOF {
-		err = io.EOF
-	}
-	if err != nil {
-		return "", nil, err
-	}
-	if keyLen <= 0 {
-		return "", nil, fmt.Errorf("negative len %v", keyLen)
-	}
-
-	b := make([]byte, keyLen)
-	_, err = io.ReadFull(r, b)
-	if err != nil {
-		return "", nil, err
-	}
-
-	err = binary.Read(bytes.NewReader(b), binary.LittleEndian, &key)
-	if err != nil {
-		return "", nil, err
-	}
-
-	var idsLen int
-	err = binary.Read(r, binary.LittleEndian, &idsLen)
-	if err != nil {
-		return "", nil, err
-	}
-	if keyLen <= 0 {
-		return "", nil, fmt.Errorf("negative len %v", idsLen)
-	}
-
-	b = make([]byte, idsLen)
-	_, err = io.ReadFull(r, b)
-	if err != nil {
-		return "", nil, err
-	}
-
-	err = binary.Read(bytes.NewReader(b), binary.LittleEndian, &ids)
-	if err != nil {
-		return "", nil, err
-	}
-
-	return key, ids, nil
-}
-
-func write(w io.Writer, key string, ids []int) error {
-	b := new(bytes.Buffer)
-
-	binary.Write(b, binary.LittleEndian, binary.Size(key))
-	binary.Write(b, binary.LittleEndian, key)
-
-	binary.Write(b, binary.LittleEndian, binary.Size(ids))
-	binary.Write(b, binary.LittleEndian, ids)
-
-	_, err := b.WriteTo(w)
-
-	return err
 }

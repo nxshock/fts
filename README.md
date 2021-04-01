@@ -19,3 +19,17 @@ ids, err := index.Search("first") // ids holds IDs of documents
 // Save index to disk
 err = index.Save()
 ```
+
+## Index file structure
+
+Index file is a [MessagePack](https://en.wikipedia.org/wiki/MessagePack) encoded file:
+
+```
+[]
+    word string // single word
+    ids  []int  // IDs of documents that contains this word
+```
+
+## Used libraries
+
+* [msgpack](https://github.com/vmihailenco/msgpack) by [vmihailenco](https://github.com/vmihailenco).
